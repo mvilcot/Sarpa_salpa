@@ -1,0 +1,10 @@
+.Rproj.user
+desktop.ini
+
+data/
+intermediate/
+results/
+manuscipt/
+
+*.structureRun/
+seed.txt
