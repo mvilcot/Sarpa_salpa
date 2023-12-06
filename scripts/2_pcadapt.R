@@ -1,13 +1,12 @@
 # ---- read data ----
 source("scripts/0_wrapper.R")
 
-filters <- "callrateind0.50_callrateloci0.70_maf0.05"
+# filters <- "callrateind0.50_callrateloci0.70_maf0.05"
+filters <- "callrateind0.50_callrateloci0.70_maf0.05_RMindoutliers"
 
 genlight <- 
   readRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, ".RDS"))
 
-data_samples <- 
-  read_csv('intermediate/metadata_samples_sequenced.csv')
 
 
 
@@ -30,7 +29,7 @@ PCADAPT <- pcadapt(genotype_pca, K = 15)
 
 # check number of PCs (=K) to retain
 plotSCREE <- plot(PCADAPT, option = "screeplot") 
-ggsave(paste0("results/pcadapt_Screeplot_", filters, ".pdf"), 
+ggsave(paste0("results/pcadapt_Screeplot_", filters, ".png"), 
        plotSCREE, height = 5, width = 8)
 
 # rerun with good number of PCs
@@ -73,17 +72,17 @@ ggsave(paste0("results/pcadapt_Histogram_", filters, "_K", K, ".png"),
 qval <- qvalue(PCADAPT$pvalues)$qvalues
 alpha <- 0.1
 outliersQ <- which(qval < alpha)
-length(outliersQ) ## N = 7278 outliers
+length(outliersQ) ## N = 856 outliers
 
-# Bonferroni correction (conservative)
-padj <- p.adjust(PCADAPT$pvalues,method="bonferroni")
-alpha <- 0.1
-outliersB <- which(padj < alpha)
-length(outliersB) ## N = 1722 outliers
-
-# compare both methods
-setdiff(outliersB, outliersQ) # in outliersB but not in outliersQ
-setdiff(outliersQ, outliersB) # in outliersQ but not in outliersB
+# # Bonferroni correction (conservative)
+# padj <- p.adjust(PCADAPT$pvalues,method="bonferroni")
+# alpha <- 0.1
+# outliersB <- which(padj < alpha)
+# length(outliersB) ## N = 153 outliers
+# 
+# # compare both methods
+# setdiff(outliersB, outliersQ) # in outliersB but not in outliersQ
+# setdiff(outliersQ, outliersB) # in outliersQ but not in outliersB
 
 # keep outliers based on 10% Q-values
 outliers <- outliersQ
@@ -92,7 +91,7 @@ outliers <- outliersQ
 outlier_loci <- data.frame(loci = rownames(genotype)[outliers], 
                            position = outliers)
 write.table(outlier_loci, 
-            file = "intermediate/pcadapt_outliersQ_loci_position.txt", 
+            file = paste0('intermediate/pcadapt_outliersQ_loci_position_', filters, '.txt'), 
             sep = "\t", quote = F, row.names = F, col.names = F)
 
 cat(length(outliers), "outlier loci")
@@ -100,9 +99,16 @@ cat(length(outliers), "outlier loci")
 
 
 ## ---- Remove outlier loci from genlight ----
-genlightADAPT <- gl.drop.loc(genlight, loc.list = outlier_loci$loci)
+genlightNEUTRAL <- gl.drop.loc(genlight, loc.list = outlier_loci$loci)
+genlightNEUTRAL 
+# 23469 SNPs remaining
+
+genlightADAPT <- gl.keep.loc(genlight, loc.list = outlier_loci$loci)
 genlightADAPT 
-# 17047 SNPs remaining
+# 856  SNPs remaining
+
+genlightNEUTRAL %>% 
+  saveRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, "_RMpcadaptQ0.1.RDS"))
 
 genlightADAPT %>% 
   saveRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, "_pcadaptQ0.1.RDS"))
@@ -111,7 +117,6 @@ genlightADAPT %>%
 
 
 
-# ---- OUTFLANK ----
+# ---- dbRDA - environment ----
 
-temp <- gl.outflank(genlight, qthreshold = 0.01)
 

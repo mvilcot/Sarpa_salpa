@@ -2,10 +2,13 @@ source("scripts/0_wrapper.R")
 
 
 # ---- read data ----
-filters <- "callrateind0.50_callrateloci0.70_maf0.05"
+filters <- "callrateind0.50_callrateloci0.70_maf0.05_RMindoutliers"
 
 genlight <- 
   readRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, ".RDS"))
+
+data_samples <- 
+  read_csv('intermediate/metadata_samples_sequenced.csv')
 
 
 
@@ -18,8 +21,8 @@ dartR::gl2geno(genlight,
 
 
 # ---- SNMF ----
-Kmax = 8
-nrun = 2
+Kmax = 4
+nrun = 10
 
 ## run snmf ----
 obj.snmf <-
@@ -34,7 +37,7 @@ obj.snmf %>%
 obj.snmf <-
   readRDS(paste0("intermediate/snmf_Sarpa_salpa_K1-", Kmax, "_nrun", nrun, ".RDS"))
 
-pdf(paste0("results/snmf_barplot_Sarpa_salpa_K1-", Kmax, "_nrun", nrun, ".pdf"),
+pdf(paste0("results/snmf_barplot_Sarpa_salpa_", filters, "_K1-", Kmax, "_nrun", nrun, ".pdf"),
     height = 4, width = 10)
 plot(obj.snmf, cex = 1.2, pch = 19)
 for (K in 2:Kmax){

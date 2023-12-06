@@ -112,7 +112,7 @@ png("results/Genlight_raw_report_callrate_loc.png", height = 8, width = 10, unit
 gl.report.callrate(gl, method = 'loc')
 dev.off()
 
-## >>>> maf ----
+## maf ----
 png("results/Genlight_raw_report_MAF.png", height = 8, width = 10, units = 'in', res = 500)
 gl.report.maf(gl) # mininum allele frequency
 dev.off()
@@ -145,6 +145,8 @@ dev.off()
 ## 1 - Individual callrate > 0.50 ----
 # Remove individual "SS38 (S_F224)"
 # and delete monomorphic loci here, that's why there is a different number of SNPs
+t5 <- read_csv("results/Genlight_raw_report_callrate_ind.csv")
+
 ind_to_remove <-
   t5 %>% 
   dplyr::filter(callrate < 0.5) %>% 
@@ -166,10 +168,34 @@ gl3 <-
 gl3
 
 
+# ## 4 - reproducibility ----
+# gl4 <-
+#   gl.filter.reproducibility(gl3, threshold = 1)
+# gl4
+# 
+# 
+# ## 5 - secondaries ----
+# gl5 <-
+#   gl.filter.secondaries(gl4)
+# gl5
+
+
+
 # ---- Save ----
 filters <- "callrateind0.50_callrateloci0.70_maf0.05"
+# filters <- "callrateind0.50_callrateloci0.70_maf0.05_reprod1"
+# filters <- "callrateind0.50_callrateloci0.70_maf0.05_reprod1_secondaries"
 
 gl3 %>% 
   saveRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, ".RDS"))
 
+
+## rm ind outliers...
+gl3sub <-
+  gl.drop.ind(gl3, c("SS01", "SS02", "SS30", "SS124"), recalc = T, mono.rm = T)
+
+filters <- "callrateind0.50_callrateloci0.70_maf0.05_RMindoutliers"
+
+gl3sub %>% 
+  saveRDS(paste0("intermediate/Genlight_Sarpa_salpa_", filters, ".RDS"))
 
